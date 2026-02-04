@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 @dataclass
-class ArticleObj:
+class Article:
     """Class for keeping track of an article on a website."""
     title: str
     date: str

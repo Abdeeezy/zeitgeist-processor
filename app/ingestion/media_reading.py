@@ -172,5 +172,28 @@ def scrapeArticleAlJazeera(page: Page):
         return articleData
 
 
+def FetchTopStoriesDataFromNYTimes():
+    
+    feed = feedparser.parse('https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml')
+    
+    headline = feed['channel']['title']
+    print('--------' + headline + "--------\n\n")
 
+    # AlJazeera dynamically loads their articles, but also locks articles behind a paywall.
+    # however, the RSS feed supplies "categories"/"keywords". 
+    #   That alongside the headline, should be enough i guess..
+    
+    for item in feed.entries:
+        
+        # each <category> is found in the `item.tags` attribute 
+        if hasattr(item, "tags"):
+            categories = [tag.term for tag in item.tags]
+            print("Categories/Keywords:", categories)
+        else:
+            print("Categories: None")
+
+        articleData = Article(headline, "N/A", "PAYBLOCKED", item.link, categories)
+    
+
+        print()
 

@@ -3,11 +3,14 @@ from dataclasses import dataclass
 @dataclass
 class Article:
     """Class for keeping track of an article on a website."""
-    title: str
+    headline: str
     date: str
     content: str
+    url: str
 
-    def __init__(self, title: str, date: str, content:str ):
-        self.title = title
+
+    def __init__(self, headline: str, date: str, content:str, url: str ):
+        self.headline = headline
         self.date = date
         self.content = content 
+        self.url = url

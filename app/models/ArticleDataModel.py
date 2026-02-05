@@ -9,7 +9,7 @@ class Article:
     url: str
     keywords: list[str]
 
-
+    #custom initializer.
     def __init__(self, headline: str, date: str, content:str, url: str, keywords = list()):
         self.headline = headline
         self.date = date

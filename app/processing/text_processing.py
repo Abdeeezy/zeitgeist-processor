@@ -25,4 +25,62 @@
 
 
 
+import spacy
+import unicodedata
+
+from app.models.ArticleDataModel import Article
+from app.models.NewsSiteDataModel import NewsCollection
+
+
+from dataclasses import dataclass
+@dataclass
+class ProcessedArticle:
+    """Class for keeping track of a news-website's articles."""
+    source: str
+    keywordList: list[str]
+
+
+
+# CONSTANTS
+HEADLINE_MULTIPLIER = 3
+
+
+
+#takes a list of news-website data-objects
+def process(newsList: list[NewsCollection]):
+
+    # Let spaCy do the heavy lifting 
+    #   Whitespace normalization
+    #   Lemmatization - Built-in, Access with `token.lemma_`
+    nlp = spacy.load("en_core_web_sm") 
+
+    # for each site
+    for newsSite in newsList:
+
+        for article in newsSite.articleList:
+
+            # add the headline to be processed and tokenized.
+            #   multiplied because headlines are crafted to be representative of the main-themes of the article
+            text = "" + (article.headline * 3) + article.content
+
+            # Minimal pre-processing
+            text = unicodedata.normalize('NFC', text)  
+            text = text.strip() 
+
+            doc = nlp(text)
+
+            # Extract what you need
+            keywords = [token.lemma_.lower() for token in doc 
+                if not token.is_stop and not token.is_punct and token.pos_ in ['NOUN', 'PROPN']]
+
+            entities = [(ent.text, ent.label_) for ent in doc.ents]
+
+            print("\n\n------KEYWORDS------\n\n")
+            print (keywords)
+            print("\n\n------ENTITIES------\n\n")
+            print (entities)
+            
+
+            break # RUN ONCE.. REMOVE
+
 

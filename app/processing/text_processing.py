@@ -54,6 +54,9 @@ def process(newsList: list[NewsCollection]):
     #   Lemmatization - Built-in, Access with `token.lemma_`
     nlp = spacy.load("en_core_web_sm") 
 
+
+    aggregatedListOfKeywordArrays = list[list[str]]()
+
     # for each site
     for newsSite in newsList:
 
@@ -73,14 +76,16 @@ def process(newsList: list[NewsCollection]):
             keywords = [token.lemma_.lower() for token in doc 
                 if not token.is_stop and not token.is_punct and token.pos_ in ['NOUN', 'PROPN']]
 
-            entities = [(ent.text, ent.label_) for ent in doc.ents]
+            #entities = [(ent.text, ent.label_) for ent in doc.ents]  # unneeded, mostly irrelevant data.
 
-            print("\n\n------KEYWORDS------\n\n")
+            print("\n\n------KEYWORDS------\n")
             print (keywords)
-            print("\n\n------ENTITIES------\n\n")
-            print (entities)
+            
+            aggregatedListOfKeywordArrays.append(keywords)
+    
+
+    return aggregatedListOfKeywordArrays
             
 
-            break # RUN ONCE.. REMOVE
 
 

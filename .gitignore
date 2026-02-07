@@ -7,3 +7,6 @@ env/
 .env/
 venvThirteen/
 keywordData.json
+
+models/
+output/

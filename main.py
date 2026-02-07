@@ -7,7 +7,7 @@ import app.processing.text_processing as PreProcessor
 import app.storage.trivial_file_storing as FileStoring
 
 
-# Pseudo-code workflow
+# Pseudo-code workflow  - IGNORE THIS
 '''
 1. Collect all keywords from all articles                           DONE
 2. Create a document-term matrix (articles × keywords)              DONE
@@ -25,10 +25,12 @@ if(processedArticlesToKeywordsMatrix == None):
     # A list of each newsSite object. which contains all the scrapped articles within it 
     listOfNewsCollection = list[NewsCollection]()
 
+            ##ignore
             # Fetch CNN  //// (outdated - boring articles from <2023 only - needs a new webscraping method that doesn't use RSS-Feeds)
             #cnnCollection: NewsCollection = MediaGet.FetchTopStoriesDataFromCNN()
             #listOfNewsCollection.append(cnnCollection)
-
+            
+            ##ignore
             # Fetch New York Times  //// (payblocked, only headlines and minimal keywords offered...)
             #nyTimesCollection: NewsCollection = MediaGet.FetchTopStoriesDataFromNYTimes()
             #listOfNewsCollection.append(nyTimesCollection)
@@ -50,18 +52,10 @@ if(processedArticlesToKeywordsMatrix != None):
 
 
 
+# processing pipeline will continue here..
 
 
 
 
 
 
-
-
-def printArticleListContent(collection: NewsCollection):
-    print("----------" + collection.name + "----------")
-    count = 0
-    for articleObj in collection.articleList:
-        print(articleObj.content[:500])
-        count += 1
-        print("\n"+count.__str__()+"\n\n")

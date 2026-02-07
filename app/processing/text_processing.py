@@ -76,7 +76,7 @@ def process(newsList: list[NewsCollection]):
             keywords = [token.lemma_.lower() for token in doc 
                 if not token.is_stop and not token.is_punct and token.pos_ in ['NOUN', 'PROPN']]
 
-            #entities = [(ent.text, ent.label_) for ent in doc.ents]  # unneeded, mostly irrelevant data.
+            #entities = [(ent.text, ent.label_) for ent in doc.ents]  # unneeded, mostly irrelevant data. but keeping it here as a reminder in case i do find a use.
 
             print("\n\n------KEYWORDS------\n")
             print (keywords)

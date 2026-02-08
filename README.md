@@ -20,6 +20,8 @@ Built in python, it'll supply the front-end with relevant data.
 - "pip install umap-learn"              // Uniform Manifold Approximation and Projection (UMAP) is a dimension reduction technique
 - "pip install hdbscan"                 // Hierarchical Density-Based Spatial Clustering of Applications with Noise. Performs DBSCAN over varying epsilon values and integrates the result to find a clustering that gives the best stability over epsilon.
 
+- “pip install anthropic” for LLM API calls for abstract computations
+
 
 ## Utilities 
 - "pip install pandas"  // fundamental high-level building block for doing practical, real world data analysis 

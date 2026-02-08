@@ -3,6 +3,7 @@ from app.models.NewsSiteDataModel import NewsCollection
 from app.models.ArticleDataModel import Article
 
 import app.processing.text_processing as PreProcessor
+import app.processing.LLM_theme_deriver as ThemeDeriver
 
 import app.storage.trivial_file_storing as FileStoring
 
@@ -40,15 +41,35 @@ if(processedArticlesToKeywordsMatrix == None):
     listOfNewsCollection.append(alJazeeraCollection)
 
     # extract keywords
-    processedArticlesToKeywordsMatrix = PreProcessor.process(listOfNewsCollection)
+    processedArticlesToKeywordsMatrix, listOfCorrespondingArticleHeadlines = PreProcessor.process(listOfNewsCollection)
 
     # save/cache the data to local-storage 
     FileStoring.save_keywords_to_json("keywordData.json", processedArticlesToKeywordsMatrix)
+    FileStoring.save_article_headlines_to_json("articleHeadlines.json", listOfCorrespondingArticleHeadlines)
 
 
 if(processedArticlesToKeywordsMatrix != None):
     print("file does exist!")
+    listOfCorrespondingArticleHeadlines = FileStoring.load_article_headlines_from_json("articleHeadlines.json")
 
+
+    articles = list[dict]()
+    for i in range(len(processedArticlesToKeywordsMatrix)):
+        keywords = processedArticlesToKeywordsMatrix[i]
+        headline = listOfCorrespondingArticleHeadlines[i]
+
+        articles.append({
+            "keywords": keywords,
+            "headline": headline
+        })
+
+        
+    # batch api calls to score articles with Claude Sonnet 4.5
+    theme_scores = ThemeDeriver.score_articles_batch(articles[:5]) # 4 cents per 5 articles with claude-sonnet-4-5, which can take up to 3000 tokens (enough for 5 articles with keywords).
+    
+    for i, article in enumerate(articles[:5]):
+        print(f"Article: '{article['headline'][:50]}...' Theme Scores: {theme_scores[i]}")
+        print("-"*50 + "\n")
 
 
 

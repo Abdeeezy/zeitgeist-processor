@@ -7,6 +7,8 @@ env/
 .env/
 venvThirteen/
 keywordData.json
+keywordData_old.json
+articleHeadlines.json
 
 models/
 output/

@@ -1,5 +1,6 @@
 
 
+##ignore these comments
 
 # Weight headlines heavily, maybe 3-5x the body text. Headlines are carefully crafted to capture the essence.
 
@@ -23,6 +24,7 @@
 
 # starting with keywords + named entities only
 
+##ignore these comments ^^
 
 
 import spacy
@@ -56,11 +58,14 @@ def process(newsList: list[NewsCollection]):
 
 
     aggregatedListOfKeywordArrays = list[list[str]]()
-
+    listOfCorrespondingArticleHeadlines = list[str]()
     # for each site
     for newsSite in newsList:
 
         for article in newsSite.articleList:
+
+            # keep track of the headline for later reference (LLM processing context)
+            listOfCorrespondingArticleHeadlines.append(article.headline)
 
             # add the headline to be processed and tokenized.
             #   multiplied because headlines are crafted to be representative of the main-themes of the article
@@ -84,7 +89,7 @@ def process(newsList: list[NewsCollection]):
             aggregatedListOfKeywordArrays.append(keywords)
     
 
-    return aggregatedListOfKeywordArrays
+    return aggregatedListOfKeywordArrays, listOfCorrespondingArticleHeadlines
             
 
 

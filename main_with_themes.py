@@ -97,7 +97,7 @@ def main():
     # ========================================================================
     
     tracker = ThemeTracker(
-        min_topic_size=3,  # Minimum 3 articles per theme
+        min_topic_size=2,  # Minimum 3 articles per theme
         model_path="models/themes",
         auto_reduce_topics=False,
         nr_topics=8

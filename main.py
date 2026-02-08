@@ -43,15 +43,34 @@ if(processedArticlesToKeywordsMatrix == None):
     # extract keywords
     processedArticlesToKeywordsMatrix, listOfCorrespondingArticleHeadlines = PreProcessor.process(listOfNewsCollection)
 
+
+    # process the articles in batches to get theme scores from the LLM
+    articles = list[dict]()
+    for i in range(len(processedArticlesToKeywordsMatrix)):
+        keywords = processedArticlesToKeywordsMatrix[i]
+        headline = listOfCorrespondingArticleHeadlines[i]
+
+        articles.append({
+            "keywords": keywords,
+            "headline": headline
+        })
+    listOfArticleScores = ThemeDeriver.score_articles_batch(articles) # 4 cents per 5 articles with claude-sonnet-4-5, which can take up to 3000 tokens (enough for 5 articles with keywords).
+    
+    for i, article in enumerate(articles):
+        print(f"Article: '{article['headline'][:50]}...' Theme Scores: {listOfArticleScores[i]}")
+        print("-"*50 + "\n")
+
+
     # save/cache the data to local-storage 
     FileStoring.save_keywords_to_json("keywordData.json", processedArticlesToKeywordsMatrix)
     FileStoring.save_article_headlines_to_json("articleHeadlines.json", listOfCorrespondingArticleHeadlines)
+    FileStoring.save_article_scores_to_json("articleScores.json", listOfArticleScores)
 
 
 if(processedArticlesToKeywordsMatrix != None):
     print("file does exist!")
     listOfCorrespondingArticleHeadlines = FileStoring.load_article_headlines_from_json("articleHeadlines.json")
-
+    listOfArticleScores = FileStoring.load_article_scores_from_json("articleScores.json")
 
     articles = list[dict]()
     for i in range(len(processedArticlesToKeywordsMatrix)):
@@ -63,13 +82,11 @@ if(processedArticlesToKeywordsMatrix != None):
             "headline": headline
         })
 
-        
-    # batch api calls to score articles with Claude Sonnet 4.5
-    theme_scores = ThemeDeriver.score_articles_batch(articles[:5]) # 4 cents per 5 articles with claude-sonnet-4-5, which can take up to 3000 tokens (enough for 5 articles with keywords).
-    
     for i, article in enumerate(articles[:5]):
-        print(f"Article: '{article['headline'][:50]}...' Theme Scores: {theme_scores[i]}")
+        print(f"Article: '{article['headline'][:50]}...' Theme Scores: {listOfArticleScores[i]}")
         print("-"*50 + "\n")
+
+    
 
 
 

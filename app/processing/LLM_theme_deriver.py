@@ -100,6 +100,7 @@ def score_articles_batch(articles_data: list[dict], batch_size: int = 5) -> list
     """
 
     all_scores = []
+    timeoutTime = 30 # seconds to wait between batches to respect rate limits
 
     
     for i in range(0, len(articles_data), batch_size):
@@ -188,9 +189,9 @@ def score_articles_batch(articles_data: list[dict], batch_size: int = 5) -> list
             }
             all_scores.extend([default_scores] * len(batch))
     
-        # Rate limit: wait 60 seconds between batches
+        # Rate limit: wait X-seconds between batches
         if i + batch_size < len(articles_data):
-            print(f"⏳ Waiting 60s for rate limit...")
-            time.sleep(60)
+            print(f"⏳ Waiting {timeoutTime}s for rate limit...")
+            time.sleep(timeoutTime)
 
-        return all_scores
+    return all_scores

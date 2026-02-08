@@ -9,6 +9,7 @@ venvThirteen/
 keywordData.json
 keywordData_old.json
 articleHeadlines.json
+articleScores.json
 
 models/
 output/

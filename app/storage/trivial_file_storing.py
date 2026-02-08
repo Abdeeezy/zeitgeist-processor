@@ -10,6 +10,12 @@ def save_article_headlines_to_json(path:str , listOfArticleHeadlines: list[str])
     with open(path, 'w') as f:
         json.dump(listOfArticleHeadlines, f, indent=2)
 
+def save_article_scores_to_json(path:str , listOfArticleScores: list[dict]):
+    with open(path, 'w') as f:
+        json.dump(listOfArticleScores, f, indent=2)
+
+
+
 # read in the cache again
 def load_keywords_from_json(path:str):
     try:
@@ -27,6 +33,17 @@ def load_article_headlines_from_json(path:str):
         with open(path, 'r') as f:
             listOfArticleHeadlines: list[str] = json.load(f)
             return listOfArticleHeadlines
+    except:
+        print("'File error - doesn't exist")
+    return None
+
+
+# read in the cache again
+def load_article_scores_from_json(path:str):
+    try:
+        with open(path, 'r') as f:
+            listOfArticleScores: list[dict] = json.load(f)
+            return listOfArticleScores
     except:
         print("'File error - doesn't exist")
     return None

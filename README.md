@@ -9,6 +9,7 @@ Built in python, it'll supply the front-end with relevant data.
 - "pip install playwright" 
 - "pip install pytest-playwright"   // end-to-end testing plugin
 - "playwright install"              // to finalize installation (installs browser binaries)
+- "pip install fastapi uvicorn"     // http server API-establishing libraries  
 
 ## core NLP and ML libraries
 - "pip install -U spacy"                    // Natural language processing library/api 

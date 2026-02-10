@@ -8,16 +8,30 @@ import app.processing.LLM_theme_deriver as ThemeDeriver
 import app.storage.trivial_file_storing as FileStoring
 
 
-# Pseudo-code workflow  - IGNORE THIS
-'''
-1. Collect all keywords from all articles                           DONE
-2. Create a document-term matrix (articles × keywords)              DONE
-3. Apply TF-IDF weighting to highlight distinctive terms            ...
-4. Use clustering or topic modeling                                 ...
-5. Examine top keywords per cluster to label themes                 ...
-'''
 
 
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+import json
+
+
+articles = []
+listOfArticleScores = []
+listOfCorrespondingArticleHeadlines = []
+processedArticlesToKeywordsMatrix = []
+
+
+
+#instantialize FastAPI app
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*", "http://localhost:3000"],  # '*' -> Allow all origins (for development only)
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
+)
 
 # attempt to load and then check if cached keyword json-file exists.. 
 #   if not, run webscraping and preprocessing to extract keywords.
@@ -57,7 +71,7 @@ if(processedArticlesToKeywordsMatrix == None):
     listOfArticleScores = ThemeDeriver.score_articles_batch(articles) # 4 cents per 5 articles with claude-sonnet-4-5, which can take up to 3000 tokens (enough for 5 articles with keywords).
     
     for i, article in enumerate(articles):
-        print(f"Article: '{article['headline'][:50]}...' Theme Scores: {listOfArticleScores[i]}")
+        print(f"Article: '{article['headline']}...' Theme Scores: {listOfArticleScores[i]}")
         print("-"*50 + "\n")
 
 
@@ -65,6 +79,9 @@ if(processedArticlesToKeywordsMatrix == None):
     FileStoring.save_keywords_to_json("keywordData.json", processedArticlesToKeywordsMatrix)
     FileStoring.save_article_headlines_to_json("articleHeadlines.json", listOfCorrespondingArticleHeadlines)
     FileStoring.save_article_scores_to_json("articleScores.json", listOfArticleScores)
+
+    
+
 
 
 if(processedArticlesToKeywordsMatrix != None):
@@ -82,16 +99,24 @@ if(processedArticlesToKeywordsMatrix != None):
             "headline": headline
         })
 
-    for i, article in enumerate(articles[:5]):
-        print(f"Article: '{article['headline'][:50]}...' Theme Scores: {listOfArticleScores[i]}")
+    for i, article in enumerate(articles):
+        print("index: ", i)
+        print(f"Article: '{article['headline']}...' Theme Scores: {listOfArticleScores[i]}")
         print("-"*50 + "\n")
 
     
-
-
-
-# processing pipeline will continue here..
-
+    # run `uvicorn main:app --reload`  in termiinal to start the FastAPI server, then access the data at the endpoint below:
+    #   http://127.0.0.1:8000/api/data
+    @app.get("/api/data")
+    def get_data():
+        return [
+            {
+                "headline": articles[i]['headline'],
+                "keywords": articles[i]['keywords'],
+                "themeScores": listOfArticleScores[i]
+            }
+            for i in range(len(articles))  # return all articles with their headlines, keywords, and theme scores
+        ]
 
 
 

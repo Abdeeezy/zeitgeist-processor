@@ -1,4 +1,5 @@
 import json
+import os
 
 
 # used to "cache" webscraped and processed data (specifically just the keywords) so that testing is quicker/easier.
@@ -47,6 +48,16 @@ def load_article_scores_from_json(path:str):
     except:
         print("'File error - doesn't exist")
     return None
+
+
+def delete_file(path:str):
+    try:
+        os.remove(path)
+        print(f"File '{path}' deleted successfully.")
+    except FileNotFoundError:
+        print(f"File '{path}' not found.")
+    except Exception as e:
+        print(f"An error occurred while trying to delete the file: {e}")
 
 
 

@@ -11,6 +11,7 @@ Built in python, it'll supply the front-end with relevant data.
 - "playwright install"              // to finalize installation (installs browser binaries)
 - "pip install fastapi uvicorn"     // http server API-establishing libraries  
 
+
 ## core NLP and ML libraries
 - "pip install -U spacy"                    // Natural language processing library/api 
 - "python -m spacy download en_core_web_sm" // English tokenizer, tagger, parser and NER

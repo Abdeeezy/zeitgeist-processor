@@ -8,11 +8,13 @@ class Article:
     content: str
     url: str
     keywords: list[str]
+    source: str
 
     #custom initializer.
-    def __init__(self, headline: str, date: str, content:str, url: str, keywords = list()):
+    def __init__(self, headline: str, date: str, content:str, url: str, keywords = list(), source = ""):
         self.headline = headline
         self.date = date
         self.content = content 
         self.url = url
         self.keywords = keywords
+        self.source = source

@@ -27,7 +27,7 @@ def score_article_themes(keywords: list[str], headline: str) -> dict:
     }
 
     try:
-        prompt = f"""Score this article's alignment with these thematic concepts (0.0 to 1.0):
+        prompt = f"""Using the article-headline and the keywords as context - Score this article's alignment with these thematic concepts (0.0 to 1.0):
 
                 Article headline: {headline}
                 Keywords: {', '.join(keywords)}

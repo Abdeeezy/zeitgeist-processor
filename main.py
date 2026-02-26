@@ -20,6 +20,8 @@ listOfArticleScores = []
 listOfCorrespondingArticleHeadlines = []
 processedArticlesToKeywordsMatrix = []
 
+ARTICLE_BATCH_SIZE = 10 # how many articles to send in one batch to the LLM for theme scoring. can adjust based on token limits and cost considerations. with claude-sonnet-4-5
+
 
 
 
@@ -84,15 +86,16 @@ def process():
         # A list of each newsSite object. which contains all the scrapped articles within it 
         listOfNewsCollection = list[NewsCollection]()
 
-                ##ignore
-                # Fetch CNN  //// (outdated - boring articles from <2023 only - needs a new webscraping method that doesn't use RSS-Feeds)
-                #cnnCollection: NewsCollection = MediaGet.FetchTopStoriesDataFromCNN()
-                #listOfNewsCollection.append(cnnCollection)
+        
+        ## -----------WEB-SCRAPING / INGESTION STEP -----------## 
+
+        ## Fetch CBC -- BOT-BLOCKS, UNUSABLE...
+        # cbcCollection: NewsCollection = MediaGet.FetchTopStoriesDataFromCBC()
+        # listOfNewsCollection.append(cbcCollection)
                 
-                ##ignore
-                # Fetch New York Times  //// (payblocked, only headlines and minimal keywords offered...)
-                #nyTimesCollection: NewsCollection = MediaGet.FetchTopStoriesDataFromNYTimes()
-                #listOfNewsCollection.append(nyTimesCollection)
+        # Fetch New York Times  //// (payblocked, only headlines and minimal keywords offered...)
+        nyTimesCollection: NewsCollection = MediaGet.FetchTopStoriesDataFromNYTimes()
+        listOfNewsCollection.append(nyTimesCollection)
 
         # Fetch AlJazeera
         alJazeeraCollection: NewsCollection = MediaGet.FetchTopStoriesDataFromAlJazeera()
@@ -101,6 +104,9 @@ def process():
         # Fetch BBC
         bbcCollection: NewsCollection = MediaGet.FetchTopStoriesDataFromBBC()
         listOfNewsCollection.append(bbcCollection)
+        ## ------------------------------------------------- ## 
+
+
 
         # extract keywords
         processedArticlesToKeywordsMatrix, listOfCorrespondingArticleHeadlines = PreProcessor.process(listOfNewsCollection)
@@ -116,7 +122,7 @@ def process():
                 "keywords": keywords,
                 "headline": headline
             })
-        listOfArticleScores = ThemeDeriver.score_articles_batch(articles) # 4 cents per 5 articles with claude-sonnet-4-5, which can take up to 3000 tokens (enough for 5 articles with keywords).
+        listOfArticleScores = ThemeDeriver.score_articles_batch(articles, ARTICLE_BATCH_SIZE) # 4 cents per 5 articles with claude-sonnet-4-5, which can take up to 3000 tokens (enough for 5 articles with keywords).
         
         for i, article in enumerate(articles):
             print(f"Article: '{article['headline']}...' Theme Scores: {listOfArticleScores[i]}")

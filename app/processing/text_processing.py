@@ -65,7 +65,7 @@ def process(newsList: list[NewsCollection]):
         for article in newsSite.articleList:
 
             # keep track of the headline for later reference (LLM processing context)
-            listOfCorrespondingArticleHeadlines.append(article.headline)
+            listOfCorrespondingArticleHeadlines.append(article.source + ' ->>- ' + article.headline)
 
             # add the headline to be processed and tokenized.
             #   multiplied because headlines are crafted to be representative of the main-themes of the article

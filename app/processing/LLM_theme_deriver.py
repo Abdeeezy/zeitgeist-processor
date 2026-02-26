@@ -33,7 +33,7 @@ def score_article_themes(keywords: list[str], headline: str) -> dict:
                 Keywords: {', '.join(keywords)}
 
                 Themes to score:
-                - Renewal
+                - Renewal 
                 - Aspiration
                 - Resilience
                 - Compassion

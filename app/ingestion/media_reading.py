@@ -19,6 +19,83 @@ from app.models.NewsSiteDataModel import NewsCollection
 
 
 ## main functions
+async def FetchTopStoriesDataFromBBC():
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        context = browser.new_context()
+        page = context.new_page()
+
+        articleCollection = []
+
+        page.goto('https://www.bbc.com/news', timeout=30000)
+
+        # Grab all headline elements and extract their parent anchor URLs first,
+        # before navigating away from the page.
+        headline_elements = page.query_selector_all('[data-testid="card-headline"]')
+
+        articles_to_visit = []
+        for el in headline_elements:
+            headline_text = el.inner_text().strip()
+
+            # Walk up the DOM to find the nearest <a> ancestor
+            anchor = el.evaluate_handle("""
+                node => {
+                    let current = node;
+                    while (current && current.tagName !== 'A') {
+                        current = current.parentElement;
+                    }
+                    return current;
+                }
+            """)
+
+            href = anchor.get_property('href')
+            url = await href.json_value() if href else None
+
+            # Some links are relative paths
+            if url and url.startswith('/'):
+                url = 'https://www.bbc.com' + url
+
+            if url:
+                articles_to_visit.append((headline_text, url))
+
+        # Now visit each article page and extract the data
+        for headline_text, url in articles_to_visit:
+            try:
+                page.goto(url, timeout=30000)
+                page.wait_for_load_state('domcontentloaded')
+
+                # --- Date ---
+                # BBC typically uses a <time> element with a datetime attribute
+                date = ""
+                time_el = page.query_selector('time')
+                if time_el:
+                    date = time_el.get_attribute('datetime') or ""
+
+                # --- Content ---
+                # BBC article body lives in elements with data-component="text-block"
+                # Scrape all content paragraph text
+                content = "\n\n".join(page.locator(".article__content p").all_inner_texts())   
+        
+
+                article = Article(
+                    headline=headline_text,
+                    date=date,
+                    content=content,
+                    url=url
+                )
+                articleCollection.append(article)
+
+            except Exception as e:
+                print(f"Failed to scrape {url}: {e}")
+                continue
+
+        context.close()
+        browser.close()
+
+        return NewsCollection("BBC", articleCollection)
+
+
+
 
 #cnn rss feed is 3 years outdated. It's not current seems to just cycle old topics....
 def FetchTopStoriesDataFromCNN():
@@ -71,7 +148,7 @@ def scrapeArticleCNN(page: Page):
         
         # Scrape all content paragraph text
         content = "\n\n".join(page.locator(".article__content p").all_inner_texts())   
-
+        
         # create the object to return
         articleData = Article(title, date, content, page.url)
 

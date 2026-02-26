@@ -98,6 +98,10 @@ def process():
         alJazeeraCollection: NewsCollection = MediaGet.FetchTopStoriesDataFromAlJazeera()
         listOfNewsCollection.append(alJazeeraCollection)
 
+        # Fetch BBC
+        bbcCollection: NewsCollection = MediaGet.FetchTopStoriesDataFromBBC()
+        listOfNewsCollection.append(bbcCollection)
+
         # extract keywords
         processedArticlesToKeywordsMatrix, listOfCorrespondingArticleHeadlines = PreProcessor.process(listOfNewsCollection)
 

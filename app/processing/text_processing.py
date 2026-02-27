@@ -62,6 +62,14 @@ def process(newsList: list[NewsCollection]):
     # for each site
     for newsSite in newsList:
 
+        # NewYorkTimes blocks content with a subscription - do skip the processing, they supply keywords freely though
+        if newsSite.name == "NYTimes": 
+            for article in newsSite.articleList:
+                listOfCorrespondingArticleHeadlines.append(article.source + ' ->>- ' + article.headline)
+                aggregatedListOfKeywordArrays.append(article.keywords)
+            continue # skip this iteration of the former-loop.
+
+
         for article in newsSite.articleList:
 
             # keep track of the headline for later reference (LLM processing context)

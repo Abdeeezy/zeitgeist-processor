@@ -20,7 +20,7 @@ listOfArticleScores = []
 listOfCorrespondingArticleHeadlines = []
 processedArticlesToKeywordsMatrix = []
 
-ARTICLE_BATCH_SIZE = 10 # how many articles to send in one batch to the LLM for theme scoring. can adjust based on token limits and cost considerations. with claude-sonnet-4-5
+ARTICLE_BATCH_SIZE = 5 # how many articles to send in one batch to the LLM for theme scoring. can adjust based on token limits and cost considerations. with claude-sonnet-4-5
 
 
 

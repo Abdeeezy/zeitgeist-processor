@@ -100,7 +100,7 @@ def score_articles_batch(articles_data: list[dict], batch_size: int = 5) -> list
     """
 
     all_scores = []
-    timeoutTime = 30 # seconds to wait between batches to respect rate limits
+    timeoutTime = 15 # seconds to wait between batches to respect rate limits
 
     
     for i in range(0, len(articles_data), batch_size):

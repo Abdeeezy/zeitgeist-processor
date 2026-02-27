@@ -228,17 +228,18 @@ def FetchTopStoriesDataFromNYTimes():
     articleCollection = list[Article]()
 
     for item in feed.entries:
-        
+       
+        categories = [] #empty array fallback in case there are no supplied categories/keywords
+         
         # each <category> is found in the `item.tags` attribute 
         if hasattr(item, "tags"):
             categories = [tag.term for tag in item.tags]
-        #     print("Categories/Keywords:", categories)
         # else:
         #     print("Categories: None")
 
         print('url: ' + item.link)
 
-        articleCollection.append(Article(headline, "N/A", "", item.link, categories, source="NYTimes")) # add to list
+        articleCollection.append(Article(item.title, "N/A", "", item.link, categories, source="NYTimes")) # add to list
         print()
 
     return NewsCollection("NYTimes", articleCollection)

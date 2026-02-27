@@ -75,6 +75,11 @@ def wipe_files_and_process_anew():
     }
 
 
+@app.get("/api/isOnline")
+def is_online():
+    return {"status": True}
+
+
 def process():
     #global variables to hold the data in-memory while the server is running, so that we don't have to read from the json files every time we want to access the data (which would be inefficient).
     global articles, listOfArticleScores, listOfCorrespondingArticleHeadlines, processedArticlesToKeywordsMatrix

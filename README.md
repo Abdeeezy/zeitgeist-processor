@@ -90,6 +90,11 @@ zeitgeist-processor/
 git clone https://github.com/Abdeeezy/zeitgeist-processor.git
 cd zeitgeist-processor
 
+#create a virtualEnv (if you want to isolate the install libraries) 
+python3 -m venv myenv
+#activate it
+source myenv/bin/activate #linux
+
 pip install -r requirements.txt
 
 # SpaCy language model

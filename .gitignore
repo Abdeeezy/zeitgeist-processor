@@ -13,3 +13,5 @@ articleScores.json
 
 models/
 output/
+
+.env

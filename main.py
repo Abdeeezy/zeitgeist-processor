@@ -1,78 +1,67 @@
+import os
 import app.ingestion.media_reading as MediaGet
 from app.models.NewsSiteDataModel import NewsCollection
-from app.models.ArticleDataModel import Article
-
 import app.processing.text_processing as PreProcessor
 import app.processing.LLM_theme_deriver as ThemeDeriver
-
 import app.storage.trivial_file_storing as FileStoring
-
-
-
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import json
 
 
-articles = []
-listOfArticleScores = []
-listOfCorrespondingArticleHeadlines = []
-processedArticlesToKeywordsMatrix = []
-
-ARTICLE_BATCH_SIZE = 5 # how many articles to send in one batch to the LLM for theme scoring. can adjust based on token limits and cost considerations. with claude-sonnet-4-5
+# -- Config --------------------------------------------------------------------
+DEV_MODE = os.getenv("ZEITGEIST_DEV", "false").lower() == "true"
+ARTICLE_BATCH_SIZE = 5# how many articles to send in one batch to the LLM for theme scoring. can adjust based on token limits and cost considerations. with claude-sonnet-4-5
 
 
 
 
+# -- App state -----------------------------------------------------------------
+# Holds the processed result in memory so /api/data doesn't re-run the pipeline.
+# None = not yet processed. Empty list = pipeline ran but found nothing.
+_pipeline_result: list[dict] | None = None
 
-#instantialize FastAPI app
-app = FastAPI()
 
+# -- FastAPI -------------------------------------------------------------------
+# run `uvicorn main:app --reload`  in termiinal to start the FastAPI server, then access the data at the endpoint below:
+#       http://127.0.0.1:8000/api/dataa
+pp = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*", "http://localhost:3000"],  # '*' -> Allow all origins (for development only)
+    allow_origins=["*"], # '*' -> Allow all origins (for development only)
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all HTTP methods
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"], # Allow all HTTP methods
+    allow_headers=["*"],# Allow all headers
 )
 
 
+# -- Routes --------------------------------------------------------------------
 
-
-
-# run `uvicorn main:app --reload`  in termiinal to start the FastAPI server, then access the data at the endpoint below:
-#   http://127.0.0.1:8000/api/data
 @app.get("/api/data")
 def get_data():
-    # if the data is already cached in json files, load it from there instead of running the whole webscraping and processing pipeline again (which can be time-consuming and costly when using the LLM).
-    if (len(articles) == 0): # don't run if data is already loaded in-memory 
-        process()
-    return [
-        {
-            "headline": articles[i]['headline'],
-            "keywords": articles[i]['keywords'],
-            "themeScores": listOfArticleScores[i]
-        }
-        for i in range(len(articles))  # return all articles with their headlines, keywords, and theme scores
-    ]
+    global _pipeline_result     
+    # if the data is not already cached in memory, load it from there
+    if _pipeline_result is None:
+        _pipeline_result = run_pipeline() 
+    return _pipeline_result
 
-@app.get("/api/wipeAndProcessAnew")
-def wipe_files_and_process_anew():
-    message = "Files wiped and processing restarted."
+
+# this endpoint is for new webscraped data. 
+# If the server has been running non-stop and user desires new data, 
+# run this to wipe the cache and re-run the pipeline  
+@app.post("/api/wipeAndProcessAnew")
+def wipe_and_process_anew():
+    global _pipeline_result
     try:
         FileStoring.delete_file("keywordData.json")
         FileStoring.delete_file("articleHeadlines.json")
         FileStoring.delete_file("articleScores.json")
-
-        process() # restart the whole process to get new data and cache it in new json files.
+        _pipeline_result = run_pipeline()
+        return {"message": "Cache wiped and pipeline re-run."}
     except Exception as e:
-        print(f"An error occurred while trying to delete the files: {e}")
-        message = "An error occurred while trying to delete the files. Check server logs for details."
-    return {
-        "message": message
-    }
+        print(f"Wipe failed: {e}")
+        return {"message": f"Error: {e}"}
 
 
 @app.get("/api/isOnline")
@@ -80,90 +69,74 @@ def is_online():
     return {"status": True}
 
 
-def process():
-    #global variables to hold the data in-memory while the server is running, so that we don't have to read from the json files every time we want to access the data (which would be inefficient).
-    global articles, listOfArticleScores, listOfCorrespondingArticleHeadlines, processedArticlesToKeywordsMatrix
+# -- Pipeline ------------------------------------------------------------------
 
-    # attempt to load and then check if cached keyword json-file exists.. 
-    #   if not, run webscraping and preprocessing to extract keywords.
-    processedArticlesToKeywordsMatrix  = FileStoring.load_keywords_from_json("keywordData.json")
-    if(processedArticlesToKeywordsMatrix == None):
-        # A list of each newsSite object. which contains all the scrapped articles within it 
-        listOfNewsCollection = list[NewsCollection]()
+def run_pipeline() -> list[dict]:
+    """
+    Single entry point. In dev mode, loads from cached files.
+    In production, runs the full scrape → preprocess → LLM pipeline,
+    then caches for next time.
+    """
+    if DEV_MODE:
+        cached = _load_from_cache()
+        if cached is not None:
+            print(f"[DEV] Loaded {len(cached)} articles from cache")
+            return cached
+        print("[DEV] No cache found — falling through to full pipeline")
 
-        
-        ## -----------WEB-SCRAPING / INGESTION STEP -----------## 
+    # -- Scrape / Ingestion ---------------------------------------------
+    collections: list[NewsCollection] = []
 
-        ## Fetch CBC -- BOT-BLOCKS, UNUSABLE...
-        # cbcCollection: NewsCollection = MediaGet.FetchTopStoriesDataFromCBC()
-        # listOfNewsCollection.append(cbcCollection)
-                
-        # Fetch New York Times  //// (payblocked, only headlines and minimal keywords offered...)
-        nyTimesCollection: NewsCollection = MediaGet.FetchTopStoriesDataFromNYTimes()
-        listOfNewsCollection.append(nyTimesCollection)
+    # Fetch New York Times
+    collections.append(MediaGet.FetchTopStoriesDataFromNYTimes())
+    # Fetch AlJazeera
+    collections.append(MediaGet.FetchTopStoriesDataFromAlJazeera())
+    # Fetch BBC
+    collections.append(MediaGet.FetchTopStoriesDataFromBBC())
 
-        # Fetch AlJazeera
-        alJazeeraCollection: NewsCollection = MediaGet.FetchTopStoriesDataFromAlJazeera()
-        listOfNewsCollection.append(alJazeeraCollection)
+    # -- Preprocess ----------------------------------------------------
+    keywords_matrix, headlines = PreProcessor.process(collections)
 
-        # Fetch BBC
-        bbcCollection: NewsCollection = MediaGet.FetchTopStoriesDataFromBBC()
-        listOfNewsCollection.append(bbcCollection)
-        ## ------------------------------------------------- ## 
+    articles = [
+        {"keywords": keywords_matrix[i], "headline": headlines[i]}
+        for i in range(len(keywords_matrix))
+    ]
 
+    # -- LLM scoring ---------------------------------------------------
+    scores = ThemeDeriver.score_articles_batch(articles, ARTICLE_BATCH_SIZE)
 
+    # -- Cache for dev reuse -------------------------------------------
+    FileStoring.save_keywords_to_json("keywordData.json", keywords_matrix)
+    FileStoring.save_article_headlines_to_json("articleHeadlines.json", headlines)
+    FileStoring.save_article_scores_to_json("articleScores.json", scores)
 
-        # extract keywords
-        processedArticlesToKeywordsMatrix, listOfCorrespondingArticleHeadlines = PreProcessor.process(listOfNewsCollection)
-
-
-        # process the articles in batches to get theme scores from the LLM
-        articles = list[dict]()
-        for i in range(len(processedArticlesToKeywordsMatrix)):
-            keywords = processedArticlesToKeywordsMatrix[i]
-            headline = listOfCorrespondingArticleHeadlines[i]
-
-            articles.append({
-                "keywords": keywords,
-                "headline": headline
-            })
-        listOfArticleScores = ThemeDeriver.score_articles_batch(articles, ARTICLE_BATCH_SIZE) # 4 cents per 5 articles with claude-sonnet-4-5, which can take up to 3000 tokens (enough for 5 articles with keywords).
-        
-        for i, article in enumerate(articles):
-            print(f"Article: '{article['headline']}...' Theme Scores: {listOfArticleScores[i]}")
-            print("-"*50 + "\n")
+    # -- Build response ------------------------------------------------
+    return _build_response(articles, scores)
 
 
-        # save/cache the data to local-storage 
-        FileStoring.save_keywords_to_json("keywordData.json", processedArticlesToKeywordsMatrix)
-        FileStoring.save_article_headlines_to_json("articleHeadlines.json", listOfCorrespondingArticleHeadlines)
-        FileStoring.save_article_scores_to_json("articleScores.json", listOfArticleScores)
+def _load_from_cache() -> list[dict] | None:
+    """Attempt to load all three cache files. Returns None if any are missing."""
+    keywords = FileStoring.load_keywords_from_json("keywordData.json")
+    headlines = FileStoring.load_article_headlines_from_json("articleHeadlines.json")
+    scores = FileStoring.load_article_scores_from_json("articleScores.json")
 
-        
+    if any(x is None for x in (keywords, headlines, scores)):
+        return None
 
-
-
-    if(processedArticlesToKeywordsMatrix != None):
-        print("file does exist!")
-        listOfCorrespondingArticleHeadlines = FileStoring.load_article_headlines_from_json("articleHeadlines.json")
-        listOfArticleScores = FileStoring.load_article_scores_from_json("articleScores.json")
-
-        articles = list[dict]()
-        for i in range(len(processedArticlesToKeywordsMatrix)):
-            keywords = processedArticlesToKeywordsMatrix[i]
-            headline = listOfCorrespondingArticleHeadlines[i]
-
-            articles.append({
-                "keywords": keywords,
-                "headline": headline
-            })
-
-        for i, article in enumerate(articles):
-            print("index: ", i)
-            print(f"Article: '{article['headline']}...' Theme Scores: {listOfArticleScores[i]}")
-            print("-"*50 + "\n")
-
-    
+    articles = [
+        {"keywords": keywords[i], "headline": headlines[i]}
+        for i in range(len(keywords))
+    ]
+    return _build_response(articles, scores)
 
 
-
+def _build_response(articles: list[dict], scores: list[dict]) -> list[dict]:
+    """Zip articles with their scores into the API response shape."""
+    return [
+        {
+            "headline": articles[i]["headline"],
+            "keywords": articles[i]["keywords"],
+            "themeScores": scores[i],
+        }
+        for i in range(len(articles))
+    ]

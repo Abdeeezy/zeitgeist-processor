@@ -116,7 +116,7 @@ def score_articles_batch(articles_data: list[dict], batch_size: int = 5) -> list
                 articles_text += f"Keywords: {', '.join(article['keywords'])}\n"
             
 
-            prompt = f"""Score this article's alignment with these thematic concepts (0.0 to 1.0):
+            prompt = f"""Using the article-headline and the keywords as context - Score this article's alignment with these thematic concepts (0.0 to 1.0):
 
                     {articles_text}
 

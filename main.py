@@ -24,8 +24,8 @@ _pipeline_result: list[dict] | None = None
 
 # -- FastAPI -------------------------------------------------------------------
 # run `uvicorn main:app --reload`  in termiinal to start the FastAPI server, then access the data at the endpoint below:
-#       http://127.0.0.1:8000/api/dataa
-pp = FastAPI()
+#       http://127.0.0.1:8000/api/data
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,

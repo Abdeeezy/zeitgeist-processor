@@ -2,11 +2,13 @@
 *.pyo
 __pycache__/
 .pytest_cache/
-.venv/
+
 env/
 .env/
 .env
 venvThirteen/
+.venv/
+myenv/
 keywordData.json
 keywordData_old.json
 articleHeadlines.json

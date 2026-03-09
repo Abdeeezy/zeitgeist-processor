@@ -5,6 +5,7 @@ __pycache__/
 .venv/
 env/
 .env/
+.env
 venvThirteen/
 keywordData.json
 keywordData_old.json
@@ -14,4 +15,4 @@ articleScores.json
 models/
 output/
 
-.env
+*.env

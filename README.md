@@ -4,9 +4,9 @@ The data pipeline behind the [Zeitgeist Engine](https://github.com/Abdeeezy/zeit
 
 ## What it does
 
-Every run of the pipeline answers one question: *what is the news "about" right now — not in terms of topics, but in terms of human themes?*
+Every run of the pipeline answers one question: *what is the news "about" right now - not in terms of topics, but in terms of human themes?*
 
-An article about a ceasefire might score high on **Renewal** and **Unity**. A piece on government surveillance scores toward **Control** and **Erosion**. These scores become particle spawn counts in the simulation — the more an article resonates with a theme, the more particles of that type appear. Over time, the simulation becomes a living, abstract portrait of the news cycle.
+An article about a ceasefire might score high on **Renewal** and **Unity**. A piece on government surveillance scores toward **Control** and **Erosion**. These scores become particle spawn counts in the simulation - the more an article resonates with a theme, the more particles of that type appear. Over time, the simulation becomes a living, abstract portrait of the news cycle.
 
 ## Pipeline Architecture
 
@@ -40,13 +40,13 @@ flowchart LR
 ### Stage breakdown
 
 **1. Ingestion** (`app/ingestion/media_reading.py`)
-Fetches current top stories from three sources. BBC and Al Jazeera are scraped with Playwright (dynamic rendering), article content is extracted in full. NY Times is RSS-only — their paywall blocks content, but the feed supplies headlines and category tags which are enough for the LLM to work with.
+Fetches current top stories from three sources. BBC and Al Jazeera are scraped with Playwright (dynamic rendering), article content is extracted in full. NY Times is RSS-only - their paywall blocks content, but the feed supplies headlines and category tags which are enough for the LLM to work with.
 
 **2. Preprocessing** (`app/processing/text_processing.py`)
 Uses SpaCy (`en_core_web_sm`) to extract keywords from article text. Headlines are weighted 3x (repeated before concatenation) since they're editorially crafted to capture the core theme. The pipeline extracts lemmatized nouns and proper nouns, filtering out stop words and punctuation.
 
 **3. LLM Theme Scoring** (`app/processing/LLM_theme_deriver.py`)
-Sends articles to Claude in batches (default 5 per request). Each article is scored 0.0–1.0 against 27 thematic concepts organized into a moral taxonomy:
+Sends articles to Claude in batches (default 5 per request). Each article is scored 0.0-1.0 against 27 thematic concepts organized into a moral taxonomy:
 
 | Alignment | Groups | Themes |
 |-----------|--------|--------|
@@ -55,7 +55,7 @@ Sends articles to Claude in batches (default 5 per request). Each article is sco
 | **Evil** | Decay, Domination, Isolation | Entropy, Corruption, Erosion, Control, Subjugation, Tyranny, Separation, Void, Desolation |
 
 **4. Serving** (`main.py`)
-FastAPI serves the scored data. Results are cached in memory for the lifetime of the server process — the pipeline only runs once per server start (or on-demand via the wipe endpoint).
+FastAPI serves the scored data. Results are cached in memory for the lifetime of the server process - the pipeline only runs once per server start (or on-demand via the wipe endpoint).
 
 ## Project Structure
 
@@ -117,10 +117,10 @@ ZEITGEIST_DEV = 'true' # enables development mode which makes use of cached data
 ### Running
 
 ```bash
-# Production — runs the full scrape + LLM pipeline on first request
+# Production - runs the full scrape + LLM pipeline on first request
 uvicorn main:app --reload
 
-# Dev mode — loads from cached JSON files if available, skips scraping + LLM
+# Dev mode - loads from cached JSON files if available, skips scraping + LLM
 ZEITGEIST_DEV=true uvicorn main:app --reload
 ```
 
@@ -188,11 +188,11 @@ The LLM scoring step is the only part that costs money. Costs depend on how many
 | Component | Model | Estimated cost per run |
 |-----------|-------|----------------------|
 | Theme scoring | Claude Sonnet 4.5 | ~$0.04 per batch of 5 articles |
-| Typical full run | ~100 articles | **~$0.30–0.40 total** |
+| Typical full run | ~100 articles | **~$0.30-0.40 total** |
 
-Each batch uses up to ~3,000 tokens. With a 15-second delay between batches for rate limiting, a full pipeline run takes roughly 2–3 minutes.
+Each batch uses up to ~3,000 tokens. With a 15-second delay between batches for rate limiting, a full pipeline run takes roughly 2-3 minutes.
 
-The dev mode cache (`ZEITGEIST_DEV=true`) exists specifically to avoid re-running the LLM during development — once you've done one full run, subsequent starts load from the JSON files at zero cost.
+The dev mode cache (`ZEITGEIST_DEV=true`) exists specifically to avoid re-running the LLM during development - once you've done one full run, subsequent starts load from the JSON files at zero cost.
 
 ## Dependencies
 

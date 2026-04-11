@@ -49,7 +49,7 @@ def score_article_themes(keywords: list[str], headline: str) -> dict:
                 - Adaptation
                 - Flow
                 - Unknown
-                - Potentia
+                - Potential
                 - Ambiguity
                 - Entropy
                 - Corruption
@@ -137,7 +137,7 @@ def score_articles_batch(articles_data: list[dict], batch_size: int = 5) -> list
                     - Adaptation
                     - Flow
                     - Unknown
-                    - Potentia
+                    - Potential
                     - Ambiguity
                     - Entropy
                     - Corruption
